@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IA3 Weather Dashboard — Open-Meteo cURL Self-Help Guide</title>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #ffffff;
+      background-image:
+        linear-gradient(#e1e8ed 1px, transparent 1px),
+        linear-gradient(90deg, #e1e8ed 1px, transparent 1px);
+      background-size: 20px 20px;
+      min-height: 100vh;
+      color: #1a202c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .header {
+      padding: 2rem 1rem 0 1rem;
+      position: relative;
+      z-index: 10;
+      display: flex;
+      justify-content: center;
+      background-color: #ffffff;
+      background-image:
+        linear-gradient(#e1e8ed 1px, transparent 1px),
+        linear-gradient(90deg, #e1e8ed 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    .header-content {
+      max-width: 980px;
+      width: 100%;
+      background: #2d3748;
+      color: white;
+      padding: 2rem;
+      border-radius: 12px 12px 0 0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      margin: 0 0 0.5rem 0;
+      font-size: 2rem;
+      font-weight: 600;
+    }
+
+    .header p {
+      margin: 0 0 1.5rem 0;
+      font-size: 1.1rem;
+      opacity: 0.92;
+    }
+
+    .ribbon {
+      background: #1a202c;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      margin: 0 -2rem -2rem -2rem;
+    }
+
+    .tab {
+      padding: 1rem 1.25rem;
+      color: rgba(255, 255, 255, 0.72);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+      border-bottom: 3px solid transparent;
+      font-size: 0.94rem;
+      background: transparent;
+      border-left: 0;
+      border-right: 0;
+      border-top: 0;
+      font-family: inherit;
+    }
+
+    .tab:hover,
+    .tab:focus {
+      color: white;
+      background: rgba(255, 255, 255, 0.08);
+      outline: none;
+    }
+
+    .tab.active {
+      color: white;
+      background: rgba(255, 255, 255, 0.12);
+      border-bottom-color: #63b3ed;
+    }
+
+    .main-content {
+      padding: 1.5rem 1rem 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .content-container {
+      max-width: 980px;
+      width: 100%;
+      background: white;
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .tab-content {
+      display: none;
+      padding: 2rem;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .intro-section {
+      background: linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%);
+      border: 1px solid rgba(102, 126, 234, 0.18);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tab-content h2,
+    .intro-section h2 {
+      margin-top: 0;
+      color: #1a202c;
+    }
+
+    h3 {
+      color: #2d3748;
+      margin-bottom: 0.75rem;
+    }
+
+    .learning-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .learning-box,
+    .checkpoint,
+    .tip-box,
+    .system-box,
+    .preview-box,
+    .callout-good,
+    .callout-warn,
+    .callout-danger {
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+    }
+
+    .learning-box,
+    .checkpoint,
+    .tip-box,
+    .preview-box {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .system-box {
+      background: linear-gradient(135deg, #f4f7ff 0%, #eef6ff 100%);
+      border: 1px solid #bfd3ff;
+    }
+
+    .callout-good {
+      background: #f0fff4;
+      border: 1px solid #c6f6d5;
+    }
+
+    .callout-warn {
+      background: #fffaf0;
+      border: 1px solid #fbd38d;
+    }
+
+    .callout-danger {
+      background: #fff5f5;
+      border: 1px solid #feb2b2;
+    }
+
+    .learning-box h3,
+    .checkpoint h4,
+    .tip-box h4,
+    .preview-box h3,
+    .system-box h4,
+    .callout-good h4,
+    .callout-warn h4,
+    .callout-danger h4 {
+      margin-top: 0;
+      color: #2d3748;
+    }
+
+    .muted {
+      color: #4a5568;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-radius: 50%;
+      margin-right: 0.75rem;
+      font-size: 1rem;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    .mini-label {
+      display: inline-block;
+      font-size: 0.8rem;
+      background: #e6fffa;
+      color: #234e52;
+      border-radius: 999px;
+      padding: 0.25rem 0.6rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+
+    .code-block {
+      margin: 1rem 0 1.5rem;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      border: 1px solid #dfe7ef;
+    }
+
+    .code-header {
+      background: #1e293b;
+      color: white;
+      padding: 0.8rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .code-language {
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .copy-button {
+      background: #3182ce;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      font-weight: 600;
+      font-family: inherit;
+    }
+
+    .copy-button:hover {
+      background: #2b6cb0;
+    }
+
+    .copy-button.copied {
+      background: #2f855a;
+    }
+
+    .code-content {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 1rem;
+      overflow-x: auto;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      line-height: 1.6;
+      font-size: 0.93rem;
+    }
+
+    .code-content code {
+      white-space: pre;
+      display: block;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0 1.5rem;
+      background: white;
+      overflow: hidden;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    th,
+    td {
+      padding: 0.85rem;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #ebf8ff;
+      color: #1a365d;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    ul,
+    ol {
+      padding-left: 1.2rem;
+    }
+
+    .api-flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr));
+      gap: 0.75rem;
+      margin: 1.5rem 0;
+    }
+
+    .flow-item {
+      background: #edf2f7;
+      border: 1px solid #cbd5e0;
+      padding: 0.9rem;
+      border-radius: 10px;
+      text-align: center;
+      font-weight: 700;
+      color: #2d3748;
+    }
+
+    .flow-item small {
+      display: block;
+      font-weight: 500;
+      color: #4a5568;
+      margin-top: 0.35rem;
+    }
+
+    .api-accordion {
+      margin: 1rem 0;
+    }
+
+    .api-accordion details {
+      background: #ffffff;
+      border: 1px solid #dbe4ef;
+      border-radius: 12px;
+      margin: 0 0 1rem 0;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+    }
+
+    .api-accordion summary {
+      cursor: pointer;
+      list-style: none;
+      padding: 1rem 1.25rem;
+      background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+      color: #1e3c72;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .api-accordion summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .api-accordion summary::after {
+      content: "+";
+      width: 1.75rem;
+      height: 1.75rem;
+      border-radius: 999px;
+      background: #667eea;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
+    .api-accordion details[open] summary::after {
+      content: "−";
+      background: #1e3c72;
+    }
+
+    .accordion-body {
+      padding: 1.25rem;
+    }
+
+    .footer-note {
+      padding: 1.4rem 2rem 2rem;
+      color: #4a5568;
+      font-size: 0.95rem;
+    }
+
+    .two-column {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      align-items: start;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 90px;
+      border: 1px solid #cbd5e0;
+      border-radius: 10px;
+      padding: 0.85rem;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .check-button {
+      background: #2b6cb0;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 0.75rem;
+      font-family: inherit;
+    }
+
+    .feedback {
+      margin-top: 0.75rem;
+      padding: 0.75rem;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .feedback.good {
+      display: block;
+      background: #f0fff4;
+      border: 1px solid #9ae6b4;
+      color: #22543d;
+    }
+
+    .feedback.warn {
+      display: block;
+      background: #fffaf0;
+      border: 1px solid #fbd38d;
+      color: #744210;
+    }
+
+    @media (max-width: 760px) {
+      .header h1 {
+        font-size: 1.55rem;
+      }
+
+      .tab {
+        width: 100%;
+        text-align: left;
+      }
+
+      .api-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .tab-content {
+        padding: 1.2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-content">
+      <h1>IA3 Weather Dashboard: Open-Meteo cURL Guide</h1>
+      <p>Self-help guide for retrieving, processing and explaining live forecast data securely.</p>
+      <nav class="ribbon" aria-label="Lesson sections">
+        <button class="tab active" data-tab="intro" type="button">Intro</button>
+        <button class="tab" data-tab="urls" type="button">API URLs</button>
+        <button class="tab" data-tab="geocoding" type="button">Location Search</button>
+        <button class="tab" data-tab="curl" type="button">PHP cURL</button>
+        <button class="tab" data-tab="visuals" type="button">Weather Codes & Icons</button>
+        <button class="tab" data-tab="graphs" type="button">Graphs</button>
+        <button class="tab" data-tab="security" type="button">Security</button>
+        <button class="tab" data-tab="data" type="button">Saved Locations</button>
+        <button class="tab" data-tab="check" type="button">Checklist</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="content-container">
+      <section id="intro" class="tab-content active">
+        <div class="intro-section">
+          <span class="mini-label">IA3 support resource</span>
+          <h2><span class="step-number">1</span>Why this guide matters</h2>
+          <p>Your IA3 prototype is a secure weather dashboard. It needs to retrieve Open-Meteo weather data, process JSON, show clear forecast information, and explain how privacy and security are considered when working with account and location data.</p>
+        </div>
+
+        <div class="learning-grid">
+          <div class="learning-box">
+            <h3>🎯 Learning intention</h3>
+            <ul>
+              <li>Understand how Open-Meteo sends weather data as JSON.</li>
+              <li>Use location search to find latitude and longitude.</li>
+              <li>Use PHP cURL to request API data more reliably.</li>
+              <li>Explain security choices in IA3 documentation.</li>
+            </ul>
+          </div>
+          <div class="learning-box">
+            <h3>✅ Success criteria</h3>
+            <ul>
+              <li>Test an Open-Meteo URL in a browser.</li>
+              <li>Identify the JSON fields needed for my dashboard.</li>
+              <li>Explain why cURL is better than a simple file request.</li>
+              <li>Recommend cURL security and reliability options.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="system-box">
+          <h4>🌦️ Important naming note</h4>
+          <p>The weather API is called <strong>Open-Meteo</strong>, not Open-Mateo. The approved source URL is <strong>https://open-meteo.com/</strong>.</p>
+        </div>
+
+        <div class="api-flow" aria-label="Open-Meteo request flow">
+          <div class="flow-item">User types location<small>e.g. Cairns</small></div>
+          <div class="flow-item">Geocoding API<small>find coordinates</small></div>
+          <div class="flow-item">Forecast API<small>request weather</small></div>
+          <div class="flow-item">JSON response<small>structured data</small></div>
+          <div class="flow-item">Dashboard output<small>cards, charts, icons</small></div>
+        </div>
+
+        <div class="checkpoint">
+          <h4>Minimum viable prototype pathway</h4>
+          <p>Use this pathway if the task feels large. Build the essential parts first, then add stronger features after the core weather data works.</p>
+          <ol>
+            <li><strong>Core step 1:</strong> Test a fixed Cairns forecast URL and display current weather.</li>
+            <li><strong>Core step 2:</strong> Search for a place and retrieve latitude and longitude.</li>
+            <li><strong>Core step 3:</strong> Use the selected coordinates to request forecast data.</li>
+            <li><strong>Core step 4:</strong> Display current and forecast values clearly on the page.</li>
+            <li><strong>Extension:</strong> Add icons, graphs, saved favourite locations, stronger error handling and clearer evaluation.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="urls" class="tab-content">
+        <h2><span class="step-number">2</span>Open-Meteo API URLs</h2>
+        <p>Open-Meteo forecast requests use <strong>latitude</strong>, <strong>longitude</strong>, and a list of weather variables. Test URLs in your browser before using them in PHP.</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">URL · Current weather for Cairns</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>https://api.open-meteo.com/v1/forecast?latitude=-16.92&amp;longitude=145.77&amp;current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&amp;timezone=Australia%2FBrisbane</code></div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">URL · Current, hourly and daily forecast for Cairns</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>https://api.open-meteo.com/v1/forecast?latitude=-16.92&amp;longitude=145.77&amp;current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&amp;hourly=temperature_2m,precipitation_probability,precipitation,wind_speed_10m&amp;daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&amp;timezone=Australia%2FBrisbane</code></div>
+        </div>
+
+        <h3>Recommended variables</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Dashboard need</th>
+              <th>Open-Meteo variables</th>
+              <th>Possible display</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Current weather</td>
+              <td><code>temperature_2m</code>, <code>relative_humidity_2m</code>, <code>precipitation</code>, <code>wind_speed_10m</code>, <code>weather_code</code></td>
+              <td>Summary cards and condition icon</td>
+            </tr>
+            <tr>
+              <td>Hourly forecast</td>
+              <td><code>temperature_2m</code>, <code>precipitation_probability</code>, <code>precipitation</code>, <code>wind_speed_10m</code></td>
+              <td>Line chart or table for the next 24 hours</td>
+            </tr>
+            <tr>
+              <td>Daily forecast</td>
+              <td><code>temperature_2m_max</code>, <code>temperature_2m_min</code>, <code>precipitation_sum</code>, <code>wind_speed_10m_max</code></td>
+              <td>7-day forecast cards</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="checkpoint">
+          <h4>🔎 Your check</h4>
+          <p>Open the Cairns forecast URL in a browser. Find the <code>current</code>, <code>hourly</code> and <code>daily</code> sections in the JSON response.</p>
+        </div>
+      </section>
+
+      <section id="geocoding" class="tab-content">
+        <h2><span class="step-number">3</span>Search for locations</h2>
+        <p>The forecast endpoint needs coordinates. Use Open-Meteo's geocoding API to turn a place name into latitude and longitude.</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">URL · Search for Cairns</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>https://geocoding-api.open-meteo.com/v1/search?name=Cairns&amp;count=5&amp;language=en&amp;format=json</code></div>
+        </div>
+
+        <div class="two-column">
+          <div class="learning-box">
+            <h3>Fields to use</h3>
+            <ul>
+              <li><code>name</code> — display name</li>
+              <li><code>latitude</code> — needed for forecast</li>
+              <li><code>longitude</code> — needed for forecast</li>
+              <li><code>admin1</code> — state or region</li>
+              <li><code>country</code> — country</li>
+              <li><code>timezone</code> — local time zone</li>
+            </ul>
+          </div>
+          <div class="callout-warn">
+            <h4>⚠️ Do not assume the first result is always correct</h4>
+            <p>Some places have the same name. A stronger design shows several results and lets the user choose the correct one.</p>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">JSON · Example geocoding result</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>{
+  "name": "Cairns",
+  "latitude": -16.923,
+  "longitude": 145.7663,
+  "country": "Australia",
+  "admin1": "Queensland",
+  "timezone": "Australia/Brisbane"
+}</code></div>
+        </div>
+      </section>
+
+      <section id="curl" class="tab-content">
+        <h2><span class="step-number">4</span>Use PHP cURL to request the API</h2>
+        <p>For this assessment, cURL is recommended because it gives your PHP program a clear way to request JSON data from an API and then display the results in your own page.</p>
+
+        <div class="callout-warn">
+          <h4>Student note</h4>
+          <p>The examples below are deliberately plain. They do not include CSS and they do not show all security or reliability choices. Use them to understand the API request process, then make your own design and explain your own technical decisions in your IA3 documentation.</p>
+        </div>
+
+        <div class="api-accordion">
+          <details open>
+            <summary>Starter example 1: Display current Cairns weather</summary>
+            <div class="accordion-body">
+              <p>This file uses fixed Cairns coordinates. It is useful for testing whether cURL, JSON decoding and basic output are working before adding user input.</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-language">PHP · cairns_weather_basic.php</span>
+                  <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+                </div>
+                <div class="code-content"><code>&lt;?php
+$url = &quot;https://api.open-meteo.com/v1/forecast?latitude=-16.92&amp;longitude=145.77&amp;current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&amp;timezone=Australia%2FBrisbane&quot;;
+
+$curl = curl_init();
+curl_setopt($curl, CURLOPT_URL, $url);
+curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($curl);
+curl_close($curl);
+
+$data = json_decode($response, true);
+?&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Cairns Weather&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Cairns Current Weather&lt;/h1&gt;
+
+    &lt;?php if (isset($data[&quot;current&quot;])): ?&gt;
+        &lt;p&gt;Temperature: &lt;?php echo $data[&quot;current&quot;][&quot;temperature_2m&quot;]; ?&gt; °C&lt;/p&gt;
+        &lt;p&gt;Humidity: &lt;?php echo $data[&quot;current&quot;][&quot;relative_humidity_2m&quot;]; ?&gt;%&lt;/p&gt;
+        &lt;p&gt;Rainfall: &lt;?php echo $data[&quot;current&quot;][&quot;precipitation&quot;]; ?&gt; mm&lt;/p&gt;
+        &lt;p&gt;Wind speed: &lt;?php echo $data[&quot;current&quot;][&quot;wind_speed_10m&quot;]; ?&gt; km/h&lt;/p&gt;
+        &lt;p&gt;Weather code: &lt;?php echo $data[&quot;current&quot;][&quot;weather_code&quot;]; ?&gt;&lt;/p&gt;
+    &lt;?php else: ?&gt;
+        &lt;p&gt;Weather data could not be loaded.&lt;/p&gt;
+    &lt;?php endif; ?&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></div>
+              </div>
+
+              <div class="learning-box">
+                <h3>How the webpage is built after the cURL request</h3>
+                <p>The first PHP block requests and decodes the API data. After that, the file changes into a normal HTML page. Small PHP sections are placed inside the HTML only where data needs to be checked or printed.</p>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Line or section</th>
+                      <th>What it does</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>?&gt;</code></td>
+                      <td>Ends the first PHP block. This lets the rest of the file start writing normal HTML.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;!DOCTYPE html&gt;</code></td>
+                      <td>Tells the browser that this page is an HTML document.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;html&gt;</code></td>
+                      <td>Starts the webpage structure.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;head&gt;</code></td>
+                      <td>Starts the page information section. This part is not shown as page content.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;title&gt;Cairns Weather&lt;/title&gt;</code></td>
+                      <td>Sets the browser tab title.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;body&gt;</code></td>
+                      <td>Starts the visible page content.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;h1&gt;Cairns Current Weather&lt;/h1&gt;</code></td>
+                      <td>Displays the main heading for the page.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;?php if (isset($data["current"])): ?&gt;</code></td>
+                      <td>Checks whether the decoded API response has a <code>current</code> section before trying to display values from it.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;?php echo $data["current"]["temperature_2m"]; ?&gt;</code></td>
+                      <td>Temporarily switches back into PHP and prints the temperature value inside the paragraph.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;p&gt;...&lt;/p&gt;</code></td>
+                      <td>Creates one paragraph for each weather value, such as temperature, humidity, rainfall and wind speed.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;?php else: ?&gt;</code></td>
+                      <td>Provides an alternative message if the expected weather data was not available.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;?php endif; ?&gt;</code></td>
+                      <td>Ends the PHP <code>if</code> statement that controls whether weather data or an error message is displayed.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;/body&gt;</code> and <code>&lt;/html&gt;</code></td>
+                      <td>Close the visible page content and finish the HTML document.</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p><strong>Key pattern:</strong> PHP gets the data first, then HTML builds the page, and short PHP <code>echo</code> statements place selected API values into the HTML.</p>
+              </div>
+            </div>
+          </details>
+
+          <details>
+            <summary>Starter example 2: Search for a place and display its weather</summary>
+            <div class="accordion-body">
+              <p>This file lets the user type a place name. It sends the place name to the geocoding API, uses the first matching result, then requests current weather for that location.</p>
+              <div class="code-block">
+                <div class="code-header">
+                  <span class="code-language">PHP · place_search_weather_basic.php</span>
+                  <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+                </div>
+                <div class="code-content"><code>&lt;?php
+function getApiData($url) {
+    $curl = curl_init();
+    curl_setopt($curl, CURLOPT_URL, $url);
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($curl);
+    curl_close($curl);
+    return json_decode($response, true);
+}
+
+$place = $_GET[&quot;place&quot;] ?? &quot;&quot;;
+$weatherData = null;
+$locationName = &quot;&quot;;
+
+if ($place !== &quot;&quot;) {
+    $geoUrl = &quot;https://geocoding-api.open-meteo.com/v1/search?name=&quot; . urlencode($place) . &quot;&amp;count=1&amp;language=en&amp;format=json&quot;;
+    $geoData = getApiData($geoUrl);
+
+    if (isset($geoData[&quot;results&quot;][0])) {
+        $location = $geoData[&quot;results&quot;][0];
+        $latitude = $location[&quot;latitude&quot;];
+        $longitude = $location[&quot;longitude&quot;];
+        $timezone = $location[&quot;timezone&quot;];
+        $locationName = $location[&quot;name&quot;] . &quot;, &quot; . $location[&quot;country&quot;];
+
+        $forecastUrl = &quot;https://api.open-meteo.com/v1/forecast?latitude=&quot; . $latitude . &quot;&amp;longitude=&quot; . $longitude . &quot;&amp;current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&amp;timezone=&quot; . urlencode($timezone);
+        $weatherData = getApiData($forecastUrl);
+    }
+}
+?&gt;
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Place Search Weather&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Search for Weather by Place&lt;/h1&gt;
+
+    &lt;form method=&quot;get&quot;&gt;
+        &lt;label for=&quot;place&quot;&gt;Place name:&lt;/label&gt;
+        &lt;input type=&quot;text&quot; id=&quot;place&quot; name=&quot;place&quot; value=&quot;&lt;?php echo $place; ?&gt;&quot;&gt;
+        &lt;button type=&quot;submit&quot;&gt;Search&lt;/button&gt;
+    &lt;/form&gt;
+
+    &lt;?php if ($place !== &quot;&quot; &amp;&amp; $weatherData === null): ?&gt;
+        &lt;p&gt;No matching location was found.&lt;/p&gt;
+    &lt;?php endif; ?&gt;
+
+    &lt;?php if (isset($weatherData[&quot;current&quot;])): ?&gt;
+        &lt;h2&gt;&lt;?php echo $locationName; ?&gt;&lt;/h2&gt;
+        &lt;p&gt;Temperature: &lt;?php echo $weatherData[&quot;current&quot;][&quot;temperature_2m&quot;]; ?&gt; °C&lt;/p&gt;
+        &lt;p&gt;Humidity: &lt;?php echo $weatherData[&quot;current&quot;][&quot;relative_humidity_2m&quot;]; ?&gt;%&lt;/p&gt;
+        &lt;p&gt;Rainfall: &lt;?php echo $weatherData[&quot;current&quot;][&quot;precipitation&quot;]; ?&gt; mm&lt;/p&gt;
+        &lt;p&gt;Wind speed: &lt;?php echo $weatherData[&quot;current&quot;][&quot;wind_speed_10m&quot;]; ?&gt; km/h&lt;/p&gt;
+        &lt;p&gt;Weather code: &lt;?php echo $weatherData[&quot;current&quot;][&quot;weather_code&quot;]; ?&gt;&lt;/p&gt;
+    &lt;?php endif; ?&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></div>
+              </div>
+
+              <div class="learning-box">
+                <h3>How the search page is built after the API setup</h3>
+                <p>This example has two jobs: it shows a search form, then it displays weather data only after a place has been searched and a matching location has been found.</p>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Line or section</th>
+                      <th>What it does</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><code>&lt;h1&gt;Search for Weather by Place&lt;/h1&gt;</code></td>
+                      <td>Gives the page a clear heading so the user understands the purpose of the page.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;form method="get"&gt;</code></td>
+                      <td>Creates a form that sends the place name through the URL as a GET value.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;label for="place"&gt;</code></td>
+                      <td>Connects text to the input field so the form is clearer and more accessible.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;input type="text" id="place" name="place" ...&gt;</code></td>
+                      <td>Creates the box where the user types a place name. The <code>name="place"</code> part matches <code>$_GET["place"]</code> in the PHP.</td>
+                    </tr>
+                    <tr>
+                      <td><code>value="&lt;?php echo $place; ?&gt;"</code></td>
+                      <td>Prints the searched place back into the input field after the form is submitted.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;button type="submit"&gt;Search&lt;/button&gt;</code></td>
+                      <td>Adds a button that submits the form and reloads the page with the place value in the URL.</td>
+                    </tr>
+                    <tr>
+                      <td><code>if ($place !== "" &amp;&amp; $weatherData === null)</code></td>
+                      <td>Shows a message when the user searched for something but the program could not find usable weather data.</td>
+                    </tr>
+                    <tr>
+                      <td><code>if (isset($weatherData["current"]))</code></td>
+                      <td>Checks that current weather data exists before showing the results section.</td>
+                    </tr>
+                    <tr>
+                      <td><code>&lt;h2&gt;&lt;?php echo $locationName; ?&gt;&lt;/h2&gt;</code></td>
+                      <td>Displays the matched location name above the weather results.</td>
+                    </tr>
+                    <tr>
+                      <td><code>echo $weatherData["current"][...]</code></td>
+                      <td>Prints selected values from the API response into the HTML page.</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p><strong>Key pattern:</strong> the form collects a place, PHP uses that place to find coordinates, then the page only displays weather output if the API data exists.</p>
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <div class="system-box">
+          <h4>How JSON becomes a PHP array</h4>
+          <p>Open-Meteo sends JSON text. After <code>json_decode($response, true)</code>, PHP can treat that JSON as a nested associative array. Each key leads to another section or value.</p>
+          <div class="code-block">
+            <div class="code-header">
+              <span class="code-language">PHP · Nested key access</span>
+              <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+            </div>
+            <div class="code-content"><code>$data = json_decode($response, true);
+
+// JSON object → PHP array → nested key access
+$currentTemperature = $data[&quot;current&quot;][&quot;temperature_2m&quot;];
+$currentWindSpeed = $data[&quot;current&quot;][&quot;wind_speed_10m&quot;];</code></div>
+          </div>
+          <p><strong>Read this from left to right:</strong> start at <code>$data</code>, move into the <code>current</code> section, then select the <code>temperature_2m</code> value.</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Code feature</th>
+              <th>Why it matters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>curl_init()</code></td>
+              <td>Starts an API request.</td>
+            </tr>
+            <tr>
+              <td><code>CURLOPT_URL</code></td>
+              <td>Sets the Open-Meteo endpoint.</td>
+            </tr>
+            <tr>
+              <td><code>CURLOPT_RETURNTRANSFER</code></td>
+              <td>Stores the response so PHP can process it before output.</td>
+            </tr>
+            <tr>
+              <td><code>curl_exec()</code></td>
+              <td>Sends the request and receives the response.</td>
+            </tr>
+            <tr>
+              <td><code>json_decode(..., true)</code></td>
+              <td>Converts JSON into a PHP associative array.</td>
+            </tr>
+            <tr>
+              <td><code>isset(...)</code></td>
+              <td>Checks that a section of the API response exists before trying to display it.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout-warn">
+          <h4>Common errors and what to check</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>What you might see</th>
+                <th>What it usually means</th>
+                <th>What to check first</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>Undefined index</code> or <code>Undefined array key</code></td>
+                <td>Your code is trying to use a key that is not in the decoded JSON.</td>
+                <td>Check the API URL includes the variable you are trying to display, then check the spelling of the nested keys.</td>
+              </tr>
+              <tr>
+                <td><code>null</code> after decoding JSON</td>
+                <td>The response may not be valid JSON, or the request may have failed.</td>
+                <td>Open the API URL in a browser and check that JSON is returned.</td>
+              </tr>
+              <tr>
+                <td>No place appears after a location search</td>
+                <td>The geocoding response may not contain a <code>results</code> array.</td>
+                <td>Try a clearer place name, check spelling, and use <code>isset($geoData[&quot;results&quot;])</code> before reading the first result.</td>
+              </tr>
+              <tr>
+                <td>The graph or chart is blank</td>
+                <td>The hourly arrays may be missing or shorter than expected.</td>
+                <td>Check that the URL requests the hourly variable, such as <code>hourly=temperature_2m</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="checkpoint">
+          <h4>Debugging habit</h4>
+          <p>When something breaks, test in this order: API URL in browser → cURL response exists → JSON decodes → required keys exist → page output is built.</p>
+        </div>
+      </section>
+
+      <section id="visuals" class="tab-content">
+        <h2><span class="step-number">5</span>Weather codes and icons</h2>
+        <p>Open-Meteo returns a <code>weather_code</code> value. This is a number based on WMO weather interpretation codes. Your prototype can convert this number into a short condition label and a visual icon.</p>
+
+        <div class="callout-warn">
+          <h4>Important idea</h4>
+          <p>Open-Meteo gives you the weather condition as data. It does not automatically draw the icon for you. Your program decides which label or icon matches each code.</p>
+        </div>
+
+        <h3>Common weather code groups</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Code or code group</th>
+              <th>Meaning</th>
+              <th>Possible icon idea</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>0</code></td>
+              <td>Clear sky</td>
+              <td>Sun / clear day</td>
+            </tr>
+            <tr>
+              <td><code>1</code>, <code>2</code>, <code>3</code></td>
+              <td>Mainly clear, partly cloudy, overcast</td>
+              <td>Partly cloudy / cloud</td>
+            </tr>
+            <tr>
+              <td><code>45</code>, <code>48</code></td>
+              <td>Fog or depositing rime fog</td>
+              <td>Fog</td>
+            </tr>
+            <tr>
+              <td><code>51</code>, <code>53</code>, <code>55</code></td>
+              <td>Drizzle</td>
+              <td>Light rain</td>
+            </tr>
+            <tr>
+              <td><code>61</code>, <code>63</code>, <code>65</code></td>
+              <td>Rain</td>
+              <td>Rain cloud</td>
+            </tr>
+            <tr>
+              <td><code>80</code>, <code>81</code>, <code>82</code></td>
+              <td>Rain showers</td>
+              <td>Showers</td>
+            </tr>
+            <tr>
+              <td><code>95</code>, <code>96</code>, <code>99</code></td>
+              <td>Thunderstorm</td>
+              <td>Thunderstorm</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Starter PHP function: turn a code into a label</h3>
+        <p>This example keeps the output simple. It helps you understand the logic before choosing your own icons or visual design.</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">PHP · Weather code to condition label</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>&lt;?php
+function getWeatherLabel($code) {
+    if ($code == 0) {
+        return &quot;Clear sky&quot;;
+    } elseif ($code == 1 || $code == 2 || $code == 3) {
+        return &quot;Cloudy&quot;;
+    } elseif ($code == 45 || $code == 48) {
+        return &quot;Fog&quot;;
+    } elseif ($code == 51 || $code == 53 || $code == 55) {
+        return &quot;Drizzle&quot;;
+    } elseif ($code == 61 || $code == 63 || $code == 65) {
+        return &quot;Rain&quot;;
+    } elseif ($code == 80 || $code == 81 || $code == 82) {
+        return &quot;Rain showers&quot;;
+    } elseif ($code == 95 || $code == 96 || $code == 99) {
+        return &quot;Thunderstorm&quot;;
+    } else {
+        return &quot;Unknown condition&quot;;
+    }
+}
+
+$code = $data[&quot;current&quot;][&quot;weather_code&quot;];
+echo &quot;&lt;p&gt;Condition: &quot; . getWeatherLabel($code) . &quot;&lt;/p&gt;&quot;;
+?&gt;</code></div>
+        </div>
+
+        <h3>Adding an icon idea</h3>
+        <p>Start by using simple text or emoji while testing. Later, you can replace the emoji with an SVG image from an open-source weather icon set.</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">PHP · Weather code to simple icon</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>&lt;?php
+function getWeatherIcon($code) {
+    if ($code == 0) return &quot;☀️&quot;;
+    if ($code == 1 || $code == 2 || $code == 3) return &quot;☁️&quot;;
+    if ($code == 45 || $code == 48) return &quot;🌫️&quot;;
+    if ($code == 51 || $code == 53 || $code == 55) return &quot;🌦️&quot;;
+    if ($code == 61 || $code == 63 || $code == 65) return &quot;🌧️&quot;;
+    if ($code == 80 || $code == 81 || $code == 82) return &quot;🌦️&quot;;
+    if ($code == 95 || $code == 96 || $code == 99) return &quot;⛈️&quot;;
+    return &quot;❓&quot;;
+}
+
+$code = $data[&quot;current&quot;][&quot;weather_code&quot;];
+echo &quot;&lt;p&gt;Icon: &quot; . getWeatherIcon($code) . &quot;&lt;/p&gt;&quot;;
+?&gt;</code></div>
+        </div>
+
+        <h3>Open-source weather icon sources</h3>
+        <p>Before using any icon set, check the licence and include an acknowledgement in your IA3 documentation.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Icon source</th>
+              <th>Why it may be useful</th>
+              <th>Licence note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="https://meteocons.com/" target="_blank" rel="noopener">Meteocons</a></td>
+              <td>Open-source weather icons available as SVG and Lottie animations.</td>
+              <td>MIT licence. Preserve copyright/licence notices when required.</td>
+            </tr>
+            <tr>
+              <td><a href="https://erikflowers.github.io/weather-icons/" target="_blank" rel="noopener">Weather Icons by Erik Flowers</a></td>
+              <td>Weather icon font and CSS classes, including WMO-related mappings.</td>
+              <td>MIT licence for the project.</td>
+            </tr>
+            <tr>
+              <td><a href="https://icon-sets.iconify.design/" target="_blank" rel="noopener">Iconify icon sets</a></td>
+              <td>Large searchable collection of open-source icon sets, including weather-related icons.</td>
+              <td>Check the licence for the specific icon set you choose.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="checkpoint">
+          <h4>Try this</h4>
+          <p>Find the <code>weather_code</code> value in the Cairns current weather JSON. Decide which label and icon your dashboard should display for that code.</p>
+        </div>
+      </section>
+
+
+      <section id="graphs" class="tab-content">
+        <h2><span class="step-number">6</span>Creating a simple graph from Open-Meteo data</h2>
+        <p>Open-Meteo gives you the data for graphs. Your webpage needs to choose values from the JSON and turn them into HTML. A good way to learn this is to build a table first, change the same data into a simple visual bar graph, and then try a PHP-only SVG chart.</p>
+
+        <div class="callout-warn">
+          <h4>Important idea</h4>
+          <p>The graph is not sent by Open-Meteo. Open-Meteo sends arrays of data. Your code pairs matching array values and decides how to display them.</p>
+        </div>
+
+        <h3>Step 1: Understand the matching arrays</h3>
+        <p>Hourly forecast data often uses matching arrays. The index number connects the time to the correct weather value.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Array position</th>
+              <th>Time value</th>
+              <th>Temperature value</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>[0]</code></td>
+              <td><code>hourly.time[0]</code></td>
+              <td><code>hourly.temperature_2m[0]</code></td>
+              <td>The first time matches the first temperature.</td>
+            </tr>
+            <tr>
+              <td><code>[1]</code></td>
+              <td><code>hourly.time[1]</code></td>
+              <td><code>hourly.temperature_2m[1]</code></td>
+              <td>The second time matches the second temperature.</td>
+            </tr>
+            <tr>
+              <td><code>[2]</code></td>
+              <td><code>hourly.time[2]</code></td>
+              <td><code>hourly.temperature_2m[2]</code></td>
+              <td>The third time matches the third temperature.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Step 2: Display the paired data in a table first</h3>
+        <p>This example assumes your earlier cURL code has already requested <code>hourly=temperature_2m</code> and decoded the JSON into <code>$data</code>.</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">PHP · Turn hourly arrays into a table</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>&lt;h2&gt;Hourly temperature table&lt;/h2&gt;
+
+&lt;?php
+$times = $data[&quot;hourly&quot;][&quot;time&quot;];
+$temps = $data[&quot;hourly&quot;][&quot;temperature_2m&quot;];
+
+echo &quot;&lt;table border=&#x27;1&#x27;&gt;&quot;;
+echo &quot;&lt;tr&gt;&lt;th&gt;Time&lt;/th&gt;&lt;th&gt;Temperature&lt;/th&gt;&lt;/tr&gt;&quot;;
+
+for ($i = 0; $i &lt; 8; $i++) {
+    $time = substr($times[$i], 11, 5);
+    $temp = $temps[$i];
+
+    echo &quot;&lt;tr&gt;&quot;;
+    echo &quot;&lt;td&gt;&quot; . $time . &quot;&lt;/td&gt;&quot;;
+    echo &quot;&lt;td&gt;&quot; . $temp . &quot;°C&lt;/td&gt;&quot;;
+    echo &quot;&lt;/tr&gt;&quot;;
+}
+
+echo &quot;&lt;/table&gt;&quot;;
+?&gt;</code></div>
+        </div>
+
+        <div class="api-accordion">
+          <details>
+            <summary>Line-by-line explanation: table first</summary>
+            <div class="accordion-body">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Line or idea</th>
+                    <th>What it does</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>$times = $data["hourly"]["time"];</code></td>
+                    <td>Stores the hourly time array from the JSON.</td>
+                  </tr>
+                  <tr>
+                    <td><code>$temps = $data["hourly"]["temperature_2m"];</code></td>
+                    <td>Stores the matching hourly temperature array.</td>
+                  </tr>
+                  <tr>
+                    <td><code>for ($i = 0; $i &lt; 8; $i++)</code></td>
+                    <td>Loops through the first eight forecast hours.</td>
+                  </tr>
+                  <tr>
+                    <td><code>substr($times[$i], 11, 5)</code></td>
+                    <td>Takes the time part from a value such as <code>2026-06-01T09:00</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>$temps[$i]</code></td>
+                    <td>Gets the temperature that matches the same time position.</td>
+                  </tr>
+                  <tr>
+                    <td><code>echo "&lt;tr&gt;";</code></td>
+                    <td>Builds each table row using HTML output from PHP.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+
+        <h3>Step 3: Turn the same data into a simple graph</h3>
+        <p>This example creates a basic bar-style graph. It uses the temperature value to decide the width of each bar.</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">PHP · Basic hourly temperature bar graph</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>&lt;h2&gt;Hourly temperature graph&lt;/h2&gt;
+
+&lt;?php
+$times = $data[&quot;hourly&quot;][&quot;time&quot;];
+$temps = $data[&quot;hourly&quot;][&quot;temperature_2m&quot;];
+
+for ($i = 0; $i &lt; 8; $i++) {
+    $time = substr($times[$i], 11, 5);
+    $temp = $temps[$i];
+
+    $barWidth = $temp * 5;
+
+    echo &quot;&lt;p&gt;&quot;;
+    echo $time . &quot; — &quot; . $temp . &quot;°C &quot;;
+    echo &quot;&lt;span style=&#x27;display:inline-block; height:14px; width:&quot; . $barWidth . &quot;px; background:gray;&#x27;&gt;&lt;/span&gt;&quot;;
+    echo &quot;&lt;/p&gt;&quot;;
+}
+?&gt;</code></div>
+        </div>
+
+        <div class="api-accordion">
+          <details>
+            <summary>Line-by-line explanation: simple graph</summary>
+            <div class="accordion-body">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Line or idea</th>
+                    <th>What it does</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>$barWidth = $temp * 5;</code></td>
+                    <td>Turns a weather value into a visual size. A temperature of <code>25</code> becomes a <code>125px</code> bar.</td>
+                  </tr>
+                  <tr>
+                    <td><code>echo $time . " — " . $temp . "°C ";</code></td>
+                    <td>Prints the label for each bar.</td>
+                  </tr>
+                  <tr>
+                    <td><code>&lt;span style='...'&gt;&lt;/span&gt;</code></td>
+                    <td>Creates a simple horizontal bar inside the webpage.</td>
+                  </tr>
+                  <tr>
+                    <td><code>width:" . $barWidth . "px;</code></td>
+                    <td>Uses the calculated width to make larger values appear as longer bars.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+
+        <h3>Trying a different weather variable</h3>
+        <p>The same graph idea can be used with other hourly arrays, such as <code>precipitation_probability</code> or <code>wind_speed_10m</code>. The important part is to pair the time array with the matching weather array.</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">PHP · Basic chance of rain graph</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>&lt;?php
+$times = $data[&quot;hourly&quot;][&quot;time&quot;];
+$rainChance = $data[&quot;hourly&quot;][&quot;precipitation_probability&quot;];
+
+for ($i = 0; $i &lt; 8; $i++) {
+    $time = substr($times[$i], 11, 5);
+    $chance = $rainChance[$i];
+    $barWidth = $chance * 2;
+
+    echo &quot;&lt;p&gt;&quot;;
+    echo $time . &quot; — &quot; . $chance . &quot;% chance of rain &quot;;
+    echo &quot;&lt;span style=&#x27;display:inline-block; height:14px; width:&quot; . $barWidth . &quot;px; background:gray;&#x27;&gt;&lt;/span&gt;&quot;;
+    echo &quot;&lt;/p&gt;&quot;;
+}
+?&gt;</code></div>
+        </div>
+
+
+        <h3>PHP chart option: using SVG</h3>
+        <p>Because this assessment uses PHP, use PHP-generated output for charts. One option is to output an <code>&lt;svg&gt;</code> chart. SVG is still HTML-based page output, but PHP decides the labels, points and lines using the Open-Meteo JSON data.</p>
+
+        <div class="callout-warn">
+          <h4>Important idea</h4>
+          <p>PHP collects and decodes the Open-Meteo JSON first. Then PHP loops through the hourly arrays and writes SVG shapes into the webpage. The chart is created from PHP output.</p>
+        </div>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">PHP · Simple SVG line chart for hourly temperature</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>&lt;h2&gt;Hourly temperature chart&lt;/h2&gt;
+
+&lt;?php
+$times = array_slice($data[&quot;hourly&quot;][&quot;time&quot;], 0, 8);
+$temps = array_slice($data[&quot;hourly&quot;][&quot;temperature_2m&quot;], 0, 8);
+
+$chartWidth = 520;
+$chartHeight = 220;
+$padding = 35;
+
+$minTemp = min($temps);
+$maxTemp = max($temps);
+$tempRange = $maxTemp - $minTemp;
+
+if ($tempRange == 0) {
+    $tempRange = 1;
+}
+
+$points = [];
+
+for ($i = 0; $i &lt; count($temps); $i++) {
+    $x = $padding + ($i * (($chartWidth - 2 * $padding) / (count($temps) - 1)));
+    $y = $chartHeight - $padding - (($temps[$i] - $minTemp) / $tempRange * ($chartHeight - 2 * $padding));
+    $points[] = $x . &quot;,&quot; . $y;
+}
+
+echo &quot;&lt;svg width=&#x27;&quot; . $chartWidth . &quot;&#x27; height=&#x27;&quot; . $chartHeight . &quot;&#x27; style=&#x27;border:1px solid black;&#x27;&gt;&quot;;
+echo &quot;&lt;polyline points=&#x27;&quot; . implode(&quot; &quot;, $points) . &quot;&#x27; fill=&#x27;none&#x27; stroke=&#x27;black&#x27; stroke-width=&#x27;2&#x27; /&gt;&quot;;
+
+for ($i = 0; $i &lt; count($temps); $i++) {
+    $point = explode(&quot;,&quot;, $points[$i]);
+    $x = $point[0];
+    $y = $point[1];
+    $label = substr($times[$i], 11, 5);
+
+    echo &quot;&lt;circle cx=&#x27;&quot; . $x . &quot;&#x27; cy=&#x27;&quot; . $y . &quot;&#x27; r=&#x27;4&#x27; fill=&#x27;black&#x27; /&gt;&quot;;
+    echo &quot;&lt;text x=&#x27;&quot; . ($x - 12) . &quot;&#x27; y=&#x27;&quot; . ($chartHeight - 10) . &quot;&#x27; font-size=&#x27;10&#x27;&gt;&quot; . $label . &quot;&lt;/text&gt;&quot;;
+    echo &quot;&lt;text x=&#x27;&quot; . ($x - 10) . &quot;&#x27; y=&#x27;&quot; . ($y - 8) . &quot;&#x27; font-size=&#x27;10&#x27;&gt;&quot; . $temps[$i] . &quot;°C&lt;/text&gt;&quot;;
+}
+
+echo &quot;&lt;/svg&gt;&quot;;
+?&gt;</code></div>
+        </div>
+
+        <div class="api-accordion">
+          <details>
+            <summary>Line-by-line explanation: PHP SVG line chart</summary>
+            <div class="accordion-body">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Line or idea</th>
+                    <th>What it does</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>array_slice(..., 0, 8)</code></td>
+                    <td>Selects the first eight hourly values so the chart stays readable.</td>
+                  </tr>
+                  <tr>
+                    <td><code>$chartWidth</code>, <code>$chartHeight</code> and <code>$padding</code></td>
+                    <td>Set the size of the SVG drawing area and leave space for labels.</td>
+                  </tr>
+                  <tr>
+                    <td><code>min($temps)</code> and <code>max($temps)</code></td>
+                    <td>Find the temperature range so values can be scaled to fit inside the chart.</td>
+                  </tr>
+                  <tr>
+                    <td><code>$x = ...</code></td>
+                    <td>Spaces the points evenly from left to right.</td>
+                  </tr>
+                  <tr>
+                    <td><code>$y = ...</code></td>
+                    <td>Converts the temperature into a vertical position on the chart.</td>
+                  </tr>
+                  <tr>
+                    <td><code>&lt;polyline&gt;</code></td>
+                    <td>Draws the line that connects each temperature point.</td>
+                  </tr>
+                  <tr>
+                    <td><code>&lt;circle&gt;</code></td>
+                    <td>Draws a dot for each hourly value.</td>
+                  </tr>
+                  <tr>
+                    <td><code>&lt;text&gt;</code></td>
+                    <td>Adds time and temperature labels to the chart.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+
+        <h3>PHP-only chart option: rainfall chance columns</h3>
+        <p>A column chart is useful when each time period is a separate value. This example uses <code>precipitation_probability</code> and draws each chance of rain value as an SVG rectangle.</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">PHP · Simple SVG column chart for chance of rain</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>&lt;h2&gt;Chance of rain chart&lt;/h2&gt;
+
+&lt;?php
+$times = array_slice($data[&quot;hourly&quot;][&quot;time&quot;], 0, 8);
+$rainChance = array_slice($data[&quot;hourly&quot;][&quot;precipitation_probability&quot;], 0, 8);
+
+$chartWidth = 520;
+$chartHeight = 220;
+$padding = 35;
+$barWidth = 35;
+
+$count = count($rainChance);
+$gap = ($chartWidth - 2 * $padding - ($count * $barWidth)) / ($count - 1);
+
+echo &quot;&lt;svg width=&#x27;&quot; . $chartWidth . &quot;&#x27; height=&#x27;&quot; . $chartHeight . &quot;&#x27; style=&#x27;border:1px solid black;&#x27;&gt;&quot;;
+
+for ($i = 0; $i &lt; $count; $i++) {
+    $chance = $rainChance[$i];
+    $barHeight = ($chance / 100) * ($chartHeight - 2 * $padding);
+    $x = $padding + ($i * ($barWidth + $gap));
+    $y = $chartHeight - $padding - $barHeight;
+    $label = substr($times[$i], 11, 5);
+
+    echo &quot;&lt;rect x=&#x27;&quot; . $x . &quot;&#x27; y=&#x27;&quot; . $y . &quot;&#x27; width=&#x27;&quot; . $barWidth . &quot;&#x27; height=&#x27;&quot; . $barHeight . &quot;&#x27; fill=&#x27;gray&#x27; /&gt;&quot;;
+    echo &quot;&lt;text x=&#x27;&quot; . ($x + 3) . &quot;&#x27; y=&#x27;&quot; . ($y - 5) . &quot;&#x27; font-size=&#x27;10&#x27;&gt;&quot; . $chance . &quot;%&lt;/text&gt;&quot;;
+    echo &quot;&lt;text x=&#x27;&quot; . ($x - 2) . &quot;&#x27; y=&#x27;&quot; . ($chartHeight - 10) . &quot;&#x27; font-size=&#x27;10&#x27;&gt;&quot; . $label . &quot;&lt;/text&gt;&quot;;
+}
+
+echo &quot;&lt;/svg&gt;&quot;;
+?&gt;</code></div>
+        </div>
+
+        <div class="system-box">
+          <h4>Explaining graph choices in IA3 documentation</h4>
+          <p>Do not only state that you made a graph. Explain why the graph type suits the weather data and user need.</p>
+          <ul>
+            <li><strong>Line graph:</strong> useful for temperature or wind trends because the order of time values matters.</li>
+            <li><strong>Column graph:</strong> useful for rainfall chance or rainfall amount because it compares separate hourly or daily values.</li>
+            <li><strong>Cards or icons:</strong> useful for quick current conditions because the user can scan them quickly.</li>
+          </ul>
+          <p><strong>Prompt:</strong> Explain why a line graph suits temperature change over time, while a column graph may suit rainfall chance or rainfall totals.</p>
+        </div>
+
+        <div class="checkpoint">
+          <h4>PHP chart challenge</h4>
+          <ol>
+            <li>Change the temperature line chart so it shows 12 hours instead of 8.</li>
+            <li>Create an SVG chart that uses wind speed instead of temperature.</li>
+            <li>Change the rainfall chance chart so it uses wider or narrower columns.</li>
+            <li>Decide which weather data is better as a line chart and which is better as a column chart.</li>
+          </ol>
+        </div>
+
+        <div class="checkpoint">
+          <h4>Try this</h4>
+          <ol>
+            <li>Change the graph so it shows 12 hours instead of 8.</li>
+            <li>Change the graph so it shows wind speed instead of temperature.</li>
+            <li>Create a second graph using precipitation probability.</li>
+            <li>Add a heading that explains which location the graph is showing.</li>
+            <li>Decide whether a line graph, bar graph, icon or card is best for each type of weather data.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="security" class="tab-content">
+        <h2><span class="step-number">7</span>Recommended cURL security and reliability options</h2>
+        <p>The starter examples intentionally leave these choices out. Use this section as a list of ideas to consider and discuss in your IA3 documentation when explaining secure API request handling.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>cURL option or function</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>CURLOPT_TIMEOUT</code></td>
+              <td>Stops the request from hanging for too long.</td>
+            </tr>
+            <tr>
+              <td><code>CURLOPT_CONNECTTIMEOUT</code></td>
+              <td>Limits how long the connection attempt can take.</td>
+            </tr>
+            <tr>
+              <td><code>CURLOPT_SSL_VERIFYPEER</code></td>
+              <td>Verifies the HTTPS certificate.</td>
+            </tr>
+            <tr>
+              <td><code>CURLOPT_SSL_VERIFYHOST</code></td>
+              <td>Checks that the certificate matches the host.</td>
+            </tr>
+            <tr>
+              <td><code>CURLOPT_FOLLOWLOCATION</code></td>
+              <td>Controls whether redirects are followed.</td>
+            </tr>
+            <tr>
+              <td><code>CURLOPT_MAXREDIRS</code></td>
+              <td>Limits the number of redirects.</td>
+            </tr>
+            <tr>
+              <td><code>CURLOPT_USERAGENT</code></td>
+              <td>Identifies the application making the request.</td>
+            </tr>
+            <tr>
+              <td><code>CURLOPT_HTTPHEADER</code></td>
+              <td>Can request JSON using a header such as <code>Accept: application/json</code>.</td>
+            </tr>
+            <tr>
+              <td><code>curl_getinfo()</code></td>
+              <td>Can check the HTTP status code, such as <code>200</code>, <code>404</code> or <code>500</code>.</td>
+            </tr>
+            <tr>
+              <td><code>curl_error()</code></td>
+              <td>Can help log or diagnose request errors.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="api-accordion">
+          <details>
+            <summary>Recommended secure API practices</summary>
+            <div class="accordion-body">
+              <ul>
+                <li>Use HTTPS URLs only.</li>
+                <li>Set a timeout so the dashboard does not freeze if the API is slow.</li>
+                <li>Check the HTTP status code before trusting the response.</li>
+                <li>Decode the JSON and check that the required fields exist before displaying data.</li>
+                <li>Show a user-friendly message if the API call fails.</li>
+                <li>Do not show raw cURL, PHP or database errors to public users.</li>
+                <li>Log technical errors for administrators instead of displaying them publicly.</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section id="data" class="tab-content">
+        <h2><span class="step-number">8</span>Planning favourite locations</h2>
+        <p>Your application should let logged-in users save favourite locations. Instead of copying a full table structure from this guide, use the JSON returned by Open-Meteo to decide which pieces of data your own method needs.</p>
+
+        <div class="callout-warn">
+          <h4>Think before storing</h4>
+          <p>Forecast data changes regularly, so storing every temperature, rainfall or wind value may not be useful. A stronger approach is to store enough location information to request fresh forecast data when the dashboard loads.</p>
+        </div>
+
+        <h3>Start with the geocoding JSON</h3>
+        <p>When a user searches for a place, the geocoding API returns structured data. Look at the key-value pairs and decide which ones are needed for a saved favourite.</p>
+
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-language">JSON · Example location result</span>
+            <button class="copy-button" onclick="copyCode(this)" type="button">Copy Code</button>
+          </div>
+          <div class="code-content"><code>{
+  "name": "Cairns",
+  "latitude": -16.923,
+  "longitude": 145.7663,
+  "country": "Australia",
+  "admin1": "Queensland",
+  "timezone": "Australia/Brisbane"
+}</code></div>
+        </div>
+
+        <h3>Questions to guide your data choices</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th>Why it matters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Which values are needed to call the forecast API again?</td>
+              <td>The forecast API needs coordinates, so location data must support future weather requests.</td>
+            </tr>
+            <tr>
+              <td>Which values help the user recognise the saved place?</td>
+              <td>A place name alone may not be enough if multiple towns or suburbs have the same name.</td>
+            </tr>
+            <tr>
+              <td>Which values help display the forecast in the correct local time?</td>
+              <td>Time zone data can help avoid showing times in UTC or in the wrong region.</td>
+            </tr>
+            <tr>
+              <td>Which values link the favourite to the correct logged-in user?</td>
+              <td>A favourite location should belong to the user who saved it, not every user of the system.</td>
+            </tr>
+            <tr>
+              <td>Which values are unnecessary or too sensitive to store?</td>
+              <td>Good data design avoids storing information that is not needed for the purpose of the application.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="two-column">
+          <div class="learning-box">
+            <h3>Possible data pairs to consider</h3>
+            <ul>
+              <li><code>name</code> and <code>admin1</code> to help identify the place.</li>
+              <li><code>country</code> and <code>timezone</code> to support clear display.</li>
+              <li><code>latitude</code> and <code>longitude</code> to request forecast data.</li>
+              <li>A link between the logged-in user and the saved favourite.</li>
+            </ul>
+          </div>
+          <div class="learning-box">
+            <h3>Design decision to make</h3>
+            <p>Decide which JSON values your prototype should store, which values it should only display, and which values it should request fresh from Open-Meteo each time.</p>
+          </div>
+        </div>
+
+        <div class="callout-good">
+          <h4>Good prototype thinking</h4>
+          <p>Use the geocoding JSON to create your own plan for favourite locations. Your final design should be justified by the purpose of the dashboard, the needs of the user, and the privacy/security expectations of the task.</p>
+        </div>
+
+        <div class="callout-danger">
+          <h4>Avoid</h4>
+          <p>Do not copy every value from the API without a reason. Do not store large amounts of changing forecast data unless your design has a clear purpose for using historical records.</p>
+        </div>
+      </section>
+
+      <section id="check" class="tab-content">
+        <h2><span class="step-number">9</span>Final checklist and self-check</h2>
+
+        <div class="learning-grid">
+          <div class="learning-box">
+            <h3>Prototype checklist</h3>
+            <ul>
+              <li>Search for a location by name.</li>
+              <li>Retrieve latitude and longitude.</li>
+              <li>Use coordinates to request weather data.</li>
+              <li>Display current and forecast weather data.</li>
+              <li>Show a chart, icon, colour-coded card or graph.</li>
+              <li>Use matching Open-Meteo arrays to create a visual chart or graph.</li>
+              <li>Convert <code>weather_code</code> into a condition label or icon.</li>
+              <li>Save preferred locations for the logged-in user.</li>
+              <li>Show meaningful error messages.</li>
+              <li>Avoid storing unnecessary personal or location data.</li>
+            </ul>
+          </div>
+          <div class="learning-box">
+            <h3>Documentation checklist</h3>
+            <ul>
+              <li>Explain why Open-Meteo was used.</li>
+              <li>Explain why cURL is recommended.</li>
+              <li>Identify the API data my dashboard needs.</li>
+              <li>Explain how matching JSON arrays are used to create a graph or chart.</li>
+              <li>Explain security and privacy choices.</li>
+              <li>Acknowledge Open-Meteo as a data source.</li>
+              <li>Acknowledge any icon source used in the interface.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="checkpoint">
+          <h4>✍️ Check my work</h4>
+          <p><strong>Q1:</strong> Explain why your prototype should use the geocoding API before the forecast API. Minimum 15 words.</p>
+          <textarea id="q1" aria-label="Question 1 response"></textarea>
+          <p><strong>Q2:</strong> Explain one cURL option or practice that improves reliability or security. Minimum 10 words.</p>
+          <textarea id="q2" aria-label="Question 2 response"></textarea>
+          <button class="check-button" onclick="checkResponses()" type="button">Check my work</button>
+          <div id="responseFeedback" class="feedback"></div>
+        </div>
+
+        <div class="system-box">
+          <h4>Evaluation prompts</h4>
+          <p>Use these prompts to think beyond whether the prototype works.</p>
+          <ul>
+            <li>What are the limitations of using API forecast data?</li>
+            <li>What happens if the weather API is unavailable or slow?</li>
+            <li>How accurate does the data need to be for travellers, event organisers or outdoor workers?</li>
+            <li>What trade-off exists between storing favourite locations and protecting user privacy?</li>
+            <li>Which part of the prototype would be hardest to maintain if Open-Meteo changed the response structure?</li>
+          </ul>
+        </div>
+
+        <div class="tip-box">
+          <h4>Source acknowledgement</h4>
+          <p>Example: Weather forecast data was retrieved from the Open-Meteo API. Open-Meteo provides free weather forecast data through JSON API endpoints.</p>
+        </div>
+      </section>
+
+      <div class="footer-note">
+        <strong>Student note:</strong> This self-help guide gives you starter examples for interacting with Open-Meteo. Adapt the ideas to suit your own prototype, user interface and database design.
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.tab-content');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        const target = document.getElementById(tab.dataset.tab);
+        if (target) target.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    function copyCode(button) {
+      const block = button.closest('.code-block');
+      if (!block) return;
+      const codeEl = block.querySelector('code');
+      if (!codeEl) return;
+      const text = codeEl.innerText;
+
+      function showCopied() {
+        button.classList.add('copied');
+        const oldText = button.innerText;
+        button.innerText = 'Copied!';
+        setTimeout(() => {
+          button.classList.remove('copied');
+          button.innerText = oldText;
+        }, 1600);
+      }
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(showCopied).catch(() => fallbackCopy(text, showCopied));
+      } else {
+        fallbackCopy(text, showCopied);
+      }
+    }
+
+    function fallbackCopy(text, callback) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.setAttribute('readonly', '');
+      textarea.style.position = 'absolute';
+      textarea.style.left = '-9999px';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        callback();
+      } catch (err) {
+        alert('Copy failed. Please highlight and copy the code manually.');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function countWords(text) {
+      return text.trim().split(/\s+/).filter(Boolean).length;
+    }
+
+    function checkResponses() {
+      const q1Words = countWords(document.getElementById('q1').value);
+      const q2Words = countWords(document.getElementById('q2').value);
+      const feedback = document.getElementById('responseFeedback');
+      const q1Ok = q1Words >= 15;
+      const q2Ok = q2Words >= 10;
+
+      if (q1Ok && q2Ok) {
+        feedback.className = 'feedback good';
+        feedback.innerHTML = '<strong>Good length:</strong> Your answers are long enough to check. Now make sure they specifically mention coordinates, forecast data, and a security or reliability reason.';
+      } else {
+        feedback.className = 'feedback warn';
+        feedback.innerHTML = '<strong>Add more detail:</strong> Q1 has ' + q1Words + ' words and needs at least 15. Q2 has ' + q2Words + ' words and needs at least 10.';
+      }
+    }
+  </script>
+</body>
+
+</html>
